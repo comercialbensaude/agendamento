@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGENDAMENTO</title>
+<style>
+body{font-family:Arial,sans-serif;text-transform:uppercase;background:#f4f4f4;margin:0;padding:20px;color:#004F9A}
+h1,h2,h3,h4{text-align:center;margin-top:0}
+button{display:block;width:100%;margin-bottom:10px;padding:15px;background:#004F9A;color:#fff;border:none;font-weight:bold;border-radius:4px;cursor:pointer}
+button:hover{background:#44C8F5;color:#004F9A}
+input,select,textarea{display:block;width:100%;padding:12px;margin-bottom:15px;border:1px solid #004F9A;border-radius:4px;box-sizing:border-box;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;margin-bottom:20px;background:#fff}
+th,td{border:1px solid #004F9A;padding:10px;text-align:center}
+th{background:#004F9A;color:#fff}
+.hide{display:none!important}
+.red{color:red;font-weight:bold}
+.mod{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:999}
+.mod-c{background:#fff;padding:20px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;border-radius:8px}
+.bx{border:2px dashed #44C8F5;padding:15px;margin-bottom:15px;background:#f9f9f9}
+.btn-d{background:#dc3545;color:#fff}
+.btn-s{background:#28a745;color:#fff}
+.btn-w{background:#ffc107;color:#000}
+.container{max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.1)}
+.dbx{background:#44C8F5;color:#004F9A;padding:15px;text-align:center;font-weight:bold;cursor:pointer;border-radius:8px;margin-bottom:10px;font-size:16px}
+.dbx:hover{background:#004F9A;color:#fff}
+.sbtn{background:#e6f7ff;border:1px solid #004F9A;color:#004F9A}
+.sbtn:disabled{background:#ccc;color:#666;cursor:not-allowed;border-color:#999}
+hr{border:1px solid #ccc;margin:20px 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>PLATAFORMA DE AGENDAMENTO</h1>
+  
+  <div id="t-log">
+    <h2>LOGIN</h2>
+    <input id="lu" placeholder="USUARIO (ex: ADMIN)">
+    <input type="password" id="lp" placeholder="SENHA (ex: 123)">
+    <button type="button" onclick="lg()">ENTRAR</button>
+  </div>
+
+  <div id="t-adm" class="hide">
+    <h2>ADMINISTRADOR</h2>
+    <button type="button" class="btn-s" onclick="opAg()">+ NOVO AGENDAMENTO</button>
+    <button type="button" class="btn-w" onclick="shM('m-ge');ldGe()">GESTAO DE ENFERMEIRAS</button>
+    <button type="button" class="btn-w" onclick="shM('m-cf');ldCf()">CONFIGURACOES E USUARIOS</button>
+    <button type="button" class="btn-w" onclick="$('pwa').value='';$('pwn').value='';shM('m-pw')">ALTERAR MINHA SENHA</button>
+    <button type="button" class="btn-d" onclick="zr()">ZERAR ATENDIMENTOS</button>
+    <button type="button" class="btn-d" onclick="out()">SAIR</button>
+    <hr>
+    <h3>ACOMPANHAMENTO DIARIO (TODOS OS AGENDAMENTOS)</h3>
+    <input type="date" id="fdt" onchange="ldAc()">
+    <button type="button" class="btn-s" onclick="exp()">BAIXAR EXCEL</button>
+    <div id="ac-tb" style="overflow-x:auto"></div>
+  </div>
+
+  <div id="t-vnd" class="hide">
+    <h2>VENDEDOR</h2>
+    <button type="button" class="btn-s" onclick="opAg()">+ NOVO AGENDAMENTO</button>
+    <button type="button" class="btn-w" onclick="$('pwa').value='';$('pwn').value='';shM('m-pw')">ALTERAR MINHA SENHA</button>
+    <hr>
+    <h3>MEUS AGENDAMENTOS</h3>
+    <div id="v-tb" style="overflow-x:auto"></div>
+    <button type="button" class="btn-d" onclick="out()">SAIR</button>
+  </div>
+
+  <div id="t-enf" class="hide">
+    <h2>ENFERMEIRA</h2>
+    <button type="button" class="btn-w" onclick="$('pwa').value='';$('pwn').value='';shM('m-pw')">ALTERAR MINHA SENHA</button>
+    <hr>
+    <h3>MINHAS ENTREVISTAS</h3>
+    <div id="e-tb" style="overflow-x:auto"></div>
+    <button type="button" class="btn-d" onclick="out()">SAIR</button>
+  </div>
+
+  <div id="t-agd" class="hide">
+    <h2>AGENDAR ENTREVISTA</h2>
+    
+    <div id="agd-d">
+      <h3>1. SELECIONE A DATA</h3>
+      <div id="d-cnt"></div>
+      <button type="button" class="btn-d" onclick="cxAg()">CANCELAR / VOLTAR</button>
+    </div>
+
+    <div id="agd-h" class="hide">
+      <h3>2. SELECIONE O HORARIO</h3>
+      <div id="h-cnt"></div>
+      <button type="button" class="btn-d" onclick="opAg(cE)">VOLTAR PARA DATAS</button>
+    </div>
+
+    <div id="agd-f" class="hide">
+      <h3>3. DADOS DO AGENDAMENTO</h3>
+      <h4 id="ihr" class="red"></h4>
+      
+      <input id="anm" placeholder="NOME DO ENTREVISTADO PRINCIPAL">
+      <input id="atl" placeholder="TELEFONE (OBRIGATORIO)">
+      <label>NASCIMENTO:</label><input type="date" id="ans" onchange="ckI()">
+      <input id="ars" class="hide" placeholder="NOME DO RESPONSAVEL">
+      <input id="afc" placeholder="FIC / PRE-PROPOSTA">
+      
+      <select id="apl" onchange="ckP()">
+        <option value="LANCERS">LANCERS</option>
+        <option value="OUTROS">OUTROS</option>
+      </select>
+      <input id="aplo" class="hide" placeholder="DIGITE O NOME DO PLANO">
+      
+      <select id="acr">
+        <option value="NORMAIS">CARENCIAS NORMAIS</option>
+        <option value="REDUZIDAS">CARENCIAS REDUZIDAS</option>
+        <option value="ZERO">CARENCIA ZERO</option>
+      </select>
+
+      <div id="dvd" class="hide">
+        <label>VENDEDOR:</label>
+        <select id="avd" onchange="ckV()"></select>
+        <input id="avdo" class="hide" placeholder="DIGITE O NOME DO VENDEDOR">
+      </div>
+      
+      <textarea id="aob" placeholder="OBSERVACOES"></textarea>
+      
+      <div id="acps"></div>
+      <button type="button" class="btn-w" onclick="adA()">+ ADICIONAR ACOMPANHANTE</button>
+      <button type="button" class="btn-s" onclick="svAg()">SALVAR AGENDAMENTO</button>
+      <button type="button" class="btn-d" onclick="$('agd-f').className='hide';$('agd-h').className=''">VOLTAR PARA HORARIOS</button>
+    </div>
+  </div>
+
+  <div id="m-ge" class="mod hide">
+    <div class="mod-c">
+      <h3>GESTAO DE ENFERMEIRAS</h3>
+      <div id="ge-tb" style="overflow-x:auto"></div>
+      <button type="button" class="btn-d" onclick="clM('m-ge')">FECHAR</button>
+    </div>
+  </div>
+
+  <div id="m-cf" class="mod hide">
+    <div class="mod-c">
+      <h3>CONFIGURACOES</h3>
+      <label>DIAS UTEIS DISPONIVEIS:</label><input type="number" id="cdu">
+      <label>TEMPO DE ATRASO (MINUTOS):</label><input type="number" id="cta">
+      <button type="button" class="btn-s" onclick="svC()">SALVAR CONFIGURACOES</button>
+      <hr>
+      <h3>CRIAR NOVO USUARIO</h3>
+      <input id="nu" placeholder="LOGIN">
+      <input id="nn" placeholder="NOME">
+      <input id="np" placeholder="SENHA">
+      <select id="nt">
+        <option value="ENF">ENFERMEIRA</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="VEND">VENDEDOR</option>
+      </select>
+      <button type="button" class="btn-s" onclick="crU()">CRIAR USUARIO</button>
+      <hr>
+      <h3>LISTA DE USUARIOS</h3>
+      <div id="us-tb" style="overflow-x:auto"></div>
+      <button type="button" class="btn-d" onclick="clM('m-cf')">FECHAR</button>
+    </div>
+  </div>
+
+  <div id="m-ed" class="mod hide">
+    <div class="mod-c">
+      <h3>EDITAR AGENDAMENTO</h3>
+      <input id="enm" placeholder="NOME">
+      <input id="etl" placeholder="TEL">
+      <label>NASCIMENTO:</label><input type="date" id="ens">
+      <input id="efc" placeholder="FIC / PRE-PROPOSTA">
+      <select id="epl" onchange="$('eplo').classList.toggle('hide',this.value!=='OUTROS')">
+        <option value="LANCERS">LANCERS</option>
+        <option value="OUTROS">OUTROS</option>
+      </select>
+      <input id="eplo" class="hide" placeholder="QUAL PLANO?">
+      <input id="ecr" placeholder="CARENCIAS">
+      <select id="evd" onchange="$('evdo').classList.toggle('hide',this.value!=='OUTRO')"></select>
+      <input id="evdo" class="hide" placeholder="QUAL VENDEDOR?">
+      <select id="een"></select>
+      <label>DATA:</label><input type="date" id="edt">
+      <label>HORA:</label><input type="time" id="ehr">
+      <textarea id="eob" placeholder="OBSERVACOES"></textarea>
+      <button type="button" class="btn-s" onclick="svEd()">SALVAR ALTERACOES</button>
+      <button type="button" class="btn-d" onclick="clM('m-ed')">CANCELAR</button>
+    </div>
+  </div>
+
+  <div id="m-eu" class="mod hide">
+    <div class="mod-c">
+      <h3>EDITAR USUARIO</h3>
+      <input id="eul" placeholder="LOGIN" disabled>
+      <input id="eun" placeholder="NOME">
+      <input id="eup" placeholder="SENHA">
+      <select id="eut">
+        <option value="ENF">ENFERMEIRA</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="VEND">VENDEDOR</option>
+      </select>
+      <button type="button" class="btn-s" onclick="svEu()">SALVAR</button>
+      <button type="button" class="btn-d" onclick="clM('m-eu')">CANCELAR</button>
+    </div>
+  </div>
+
+  <div id="m-rg" class="mod hide">
+    <div class="mod-c">
+      <h3>REAGENDAR</h3>
+      <select id="rmot" onchange="$('rmt').classList.toggle('hide', this.value!=='OUTROS')">
+        <option value="PROTOCOLO DE IDOSOS">PROTOCOLO DE IDOSOS</option>
+        <option value="OUTROS">OUTROS</option>
+      </select>
+      <textarea id="rmt" class="hide" placeholder="DIGITE O MOTIVO DO REAGENDAMENTO..."></textarea>
+      <button type="button" class="btn-s" onclick="cfRg()">CONFIRMAR</button>
+      <button type="button" class="btn-d" onclick="clM('m-rg')">CANCELAR</button>
+    </div>
+  </div>
+
+  <div id="m-ps" class="mod hide">
+    <div class="mod-c">
+      <h3 id="tps"></h3>
+      <div id="lps"></div>
+      <label>INICIO DA PAUSA:</label><input type="time" id="pi">
+      <label>FIM DA PAUSA:</label><input type="time" id="pf">
+      <button type="button" class="btn-s" onclick="adP()">ADICIONAR PAUSA</button>
+      <button type="button" class="btn-d" onclick="clM('m-ps')">FECHAR</button>
+    </div>
+  </div>
+
+  <div id="m-pw" class="mod hide">
+    <div class="mod-c">
+      <h3>ALTERAR SENHA</h3>
+      <input type="password" id="pwa" placeholder="SENHA ATUAL">
+      <input type="password" id="pwn" placeholder="NOVA SENHA">
+      <button type="button" class="btn-s" onclick="svPw()">SALVAR NOVA SENHA</button>
+      <button type="button" class="btn-d" onclick="clM('m-pw')">CANCELAR</button>
+    </div>
+  </div>
+
+  <div id="m-zr" class="mod hide">
+    <div class="mod-c">
+      <h3>ZERAR ATENDIMENTOS</h3>
+      <select id="zo" onchange="$('zd').classList.toggle('hide',this.value==='T')">
+        <option value="T">APAGAR TODOS</option>
+        <option value="D">DIA ESPECIFICO</option>
+      </select>
+      <input type="date" id="zd" class="hide">
+      <button type="button" class="btn-d" onclick="cfZr()">CONFIRMAR EXCLUSAO</button>
+      <button type="button" onclick="clM('m-zr')">CANCELAR</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// COLOQUE A URL DO SEU GOOGLE APPS SCRIPT AQUI DENTRO DAS ASPAS
+const URL_APP_SCRIPT ="1XdJyyxf6PCW1QEi1hU4kyGeQBPW4TRcy8FtOljOD06M";
+
+// BANCO DE DADOS LOCAL (Versao 18 - Atraso e Observacoes)
+const $ = id => document.getElementById(id);
+let us = JSON.parse(localStorage.getItem('us_v18')) || [
+  {u:'ADMIN', n:'ADMINISTRADOR', p:'123', t:'ADMIN', a:1},
+  {u:'VEND', n:'VENDEDOR 1', p:'123', t:'VEND', a:1},
+  {u:'ENF1', n:'ENFERMEIRA 1', p:'123', t:'ENF', a:1, aI:'', aF:'', ps:[]}
+];
+let ag = JSON.parse(localStorage.getItem('ag_v18')) || [];
+let cf = JSON.parse(localStorage.getItem('cf_v18')) || {du:5, lu:'', ta:5};
+let cu = null, cE = null, cU = null, aC = 0, ep = '', sD = '', sH = '';
+
+us.forEach(u => { if(u.t === 'ENF') { u.ps = u.ps || []; u.aI = u.aI || ''; u.aF = u.aF || ''; } });
+
+window.envPlanilha = (dados) => {
+  if(!URL_APP_SCRIPT || URL_APP_SCRIPT ==="1XdJyyxf6PCW1QEi1hU4kyGeQBPW4TRcy8FtOljOD06M") return;
+  fetch(URL_APP_SCRIPT, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  }).catch(e => console.error('Erro ao enviar para o Sheets:', e));
+};
+
+const sv = () => {
+  localStorage.setItem('us_v18', JSON.stringify(us));
+  localStorage.setItem('ag_v18', JSON.stringify(ag));
+  localStorage.setItem('cf_v18', JSON.stringify(cf));
+};
+const sh = id => {
+  ['t-log','t-adm','t-vnd','t-enf','t-agd'].forEach(x => $(x).classList.add('hide'));
+  $(id).classList.remove('hide');
+};
+const shM = id => $(id).classList.remove('hide');
+const clM = id => $(id).classList.add('hide');
+
+window.lg = () => {
+  let u = $('lu').value.toUpperCase().trim(), p = $('lp').value.trim();
+  let f = us.find(x => x.u === u && x.p === p);
+  if(f) {
+    if(!f.a) return alert('USUARIO DESATIVADO!');
+    cu = f; $('lu').value = ''; $('lp').value = '';
+    sh(f.t === 'ADMIN' ? 't-adm' : (f.t === 'VEND' ? 't-vnd' : 't-enf'));
+    ld();
+  } else alert('LOGIN OU SENHA INVALIDOS!');
+};
+window.out = () => { cu = null; sh('t-log'); };
+
+window.svPw = () => {
+  let a = $('pwa').value.trim(), n = $('pwn').value.trim();
+  if(a !== cu.p) return alert('SENHA ATUAL INCORRETA!');
+  if(!n) return alert('PREENCHA A NOVA SENHA!');
+  cu.p = n;
+  let x = us.find(y => y.u === cu.u);
+  x.p = n;
+  sv();
+  alert('SENHA ALTERADA COM SUCESSO!');
+  clM('m-pw');
+};
+
+window.ckI = () => {
+  let dN = new Date($('ans').value), dA = new Date(sD || new Date());
+  let i = dA.getFullYear() - dN.getFullYear();
+  if(dA.getMonth() < dN.getMonth() || (dA.getMonth() === dN.getMonth() && dA.getDate() < dN.getDate())) i--;
+  $('ars').classList.toggle('hide', i >= 18);
+  $('ars').required = i < 18;
+};
+window.ckP = () => $('aplo').classList.toggle('hide', $('apl').value !== 'OUTROS');
+window.ckV = () => $('avdo').classList.toggle('hide', $('avd').value !== 'OUTRO');
+
+window.cxAg = () => {
+  ['anm','atl','ans','ars','afc','aplo','aob'].forEach(i => { if($(i)) $(i).value = ''; });
+  if($('apl')) $('apl').value = 'LANCERS'; 
+  if($('acr')) $('acr').value = 'NORMAIS'; 
+  if($('acps')) $('acps').innerHTML = ''; 
+  aC = 0; cE = null;
+  $('agd-d').className = ''; $('agd-h').className = 'hide'; $('agd-f').className = 'hide';
+  sh(cu.t === 'ADMIN' ? 't-adm' : (cu.t === 'VEND' ? 't-vnd' : 't-enf'));
+  ld();
+};
+
+window.opAg = (id) => {
+  if (typeof id !== 'number') id = null;
+  cE = id; 
+  ['anm','atl','ans','ars','afc','aplo','aob'].forEach(i => $(i).value = '');
+  $('apl').value = 'LANCERS'; $('acr').value = 'NORMAIS';
+  $('ars').classList.add('hide'); $('aplo').classList.add('hide');
+  $('acps').innerHTML = ''; aC = 0;
+  
+  let v = $('avd'); v.innerHTML = '<option value="FIC">FIC</option><option value="OUTRO">OUTRO</option>';
+  us.filter(x => x.t === 'VEND').forEach(x => v.innerHTML += `<option value="${x.u}">${x.n}</option>`);
+  
+  if(cu.t === 'ADMIN'){
+    $('dvd').classList.remove('hide'); $('avdo').classList.add('hide'); v.value = 'FIC';
+  } else {
+    $('dvd').classList.add('hide');
+  }
+
+  if(id) {
+    let a = ag.find(x => x.id === id);
+    $('anm').value = a.nm; $('atl').value = a.tl; $('ans').value = a.ns; $('afc').value = a.fc; $('acr').value = a.cr; $('aob').value = a.ob;
+    if(a.pl === 'LANCERS') { $('apl').value = 'LANCERS'; } 
+    else { $('apl').value = 'OUTROS'; $('aplo').value = a.pl; $('aplo').classList.remove('hide'); }
+    
+    if(cu.t === 'ADMIN'){
+      let op = Array.from(v.options).map(o => o.value);
+      if(op.includes(a.vd)) v.value = a.vd;
+      else { v.value = 'OUTRO'; $('avdo').value = a.vd; $('avdo').classList.remove('hide'); }
+    }
+  } 
+  
+  $('agd-d').className = ''; $('agd-h').className = 'hide'; $('agd-f').className = 'hide';
+  ldDs();
+  sh('t-agd');
+};
+
+window.ldDs = () => {
+  let c = $('d-cnt'); c.innerHTML = ''; 
+  let d = new Date();
+  let adicionados = 0;
+  
+  while(adicionados <= cf.du) {
+    if(d.getDay() !== 0 && d.getDay() !== 6) {
+      let is = d.toISOString().split('T')[0];
+      let br = d.toLocaleDateString('pt-BR');
+      c.innerHTML += `<div class="dbx" onclick="ldHs('${is}','${br}')">${br}</div>`;
+      adicionados++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+};
+
+window.ldHs = (d, br) => {
+  sD = d; 
+  $('agd-d').className = 'hide'; $('agd-h').className = ''; 
+  let c = $('h-cnt'); c.innerHTML = '';
+  
+  let hj = new Date(), hI = hj.toISOString().split('T')[0], mH = hj.getHours() * 60 + hj.getMinutes();
+  
+  for(let h = 8; h < 18; h++) {
+    for(let m of [0, 30]) {
+      let sHh = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      let mins = h * 60 + m;
+      
+      if(d === hI && mins <= mH) {
+        c.innerHTML += `<button class="sbtn" disabled>${sHh} - EXPIRADO</button>`;
+        continue;
+      }
+      
+      let vg = cAv(d, sHh);
+      if(vg <= 0) {
+        c.innerHTML += `<button class="sbtn" disabled>${sHh} - ESGOTADO</button>`;
+      } else {
+        c.innerHTML += `<button class="sbtn" onclick="opFm('${d}','${sHh}')">${sHh} (${vg} VAGAS)</button>`;
+      }
+    }
+  }
+};
+
+window.cAv = (d, h) => {
+  let aM = cE ? ag.find(x => x.id === cE) : null;
+  let forceEnf = (aM && aM.st.includes('PROTOCOLO DE IDOSOS')) ? aM.en : null;
+
+  let enfs = us.filter(u => u.t === 'ENF' && u.a);
+  if(forceEnf) enfs = enfs.filter(u => u.u === forceEnf);
+
+  let v = enfs.length;
+  enfs.forEach(e => {
+    if(e.aI && e.aF && h >= e.aI && h < e.aF) { v--; return; }
+    if(e.ps && e.ps.some(p => h >= p.i && h < p.f)) { v--; return; }
+    if(ag.some(a => a.dt === d && a.hr === h && a.en === e.u && !a.st.includes('AGUARDANDO') && a.id !== cE)) { v--; return; }
+  });
+  return v < 0 ? 0 : v;
+};
+
+window.opFm = (d, h) => {
+  sD = d; sH = h; 
+  $('agd-h').className = 'hide'; $('agd-f').className = '';
+  $('ihr').innerText = `DATA: ${d.split('-').reverse().join('/')} | HORA: ${h}`;
+  ckI();
+};
+
+window.adA = () => {
+  $('acps').innerHTML += `<div class="bx" id="ac${aC}"><h4>ACOMPANHANTE ${aC+1}</h4><input id="acn${aC}" placeholder="NOME"><label>NASCIMENTO:</label><input type="date" id="acd${aC}"><input id="acp${aC}" placeholder="PARENTESCO"><button type="button" class="btn-d" onclick="$('ac${aC}').remove()">REMOVER</button></div>`;
+  aC++;
+};
+
+window.svAg = () => {
+  let nm = $('anm').value.toUpperCase().trim(), tl = $('atl').value.trim(), ns = $('ans').value, rs = $('ars').value.toUpperCase().trim(), fc = $('afc').value.toUpperCase().trim(), cr = $('acr').value.toUpperCase().trim();
+  
+  if(!nm || !tl || !ns || !fc) return alert('PREENCHA NOME, TEL, NASCIMENTO E FIC/PRE-PROPOSTA!');
+
+  let pl = $('apl').value === 'OUTROS' ? $('aplo').value.toUpperCase().trim() : 'LANCERS';
+  let vd = cu.t === 'ADMIN' ? ($('avd').value === 'OUTRO' ? $('avdo').value.toUpperCase().trim() : $('avd').value) : cu.u;
+  
+  let ac = [], el = document.querySelectorAll('.bx');
+  for(let e of el) {
+    let n = e.querySelector('input[id^="acn"]').value.toUpperCase().trim(), d = e.querySelector('input[type="date"]').value, p = e.querySelector('input[id^="acp"]').value.toUpperCase().trim();
+    if(!n || !d || !p) return alert('PREENCHA OS DADOS DOS ACOMPANHANTES!');
+    ac.push({n, d, p});
+  }
+  
+  let req = 1 + ac.length, rT = []; let [hh, mm] = sH.split(':').map(Number);
+  for(let i = 0; i < req; i++) {
+    let m = hh * 60 + mm + i * 30;
+    rT.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+  }
+  
+  let aM = cE ? ag.find(x => x.id === cE) : null;
+  let forceEnf = (aM && aM.st.includes('PROTOCOLO DE IDOSOS')) ? aM.en : null;
+
+  let allEnfs = us.filter(u => u.t === 'ENF' && u.a);
+  if(forceEnf) allEnfs = allEnfs.filter(u => u.u === forceEnf);
+
+  let disp = allEnfs.filter(e => {
+    return rT.every(t => {
+      if(t >= "18:00") return false;
+      if(e.aI && e.aF && t >= e.aI && t < e.aF) return false;
+      if(e.ps && e.ps.some(p => t >= p.i && t < p.f)) return false;
+      if(ag.some(a => a.dt === sD && a.hr === t && a.en === e.u && !a.st.includes('AGUARDANDO') && a.id !== cE)) return false;
+      return true;
+    });
+  });
+  
+  if(!disp.length) return alert('HORARIOS CONSECUTIVOS INDISPONIVEIS NA MESMA ENFERMEIRA!');
+  
+  let enf;
+  if(forceEnf) {
+    enf = forceEnf;
+  } else {
+    let lastIdx = allEnfs.findIndex(x => x.u === cf.lu);
+    if(lastIdx === -1) lastIdx = 0;
+    
+    disp.sort((a,b) => {
+      let ia = allEnfs.findIndex(x => x.u === a.u);
+      let ib = allEnfs.findIndex(x => x.u === b.u);
+      let da = (ia - lastIdx + allEnfs.length) % allEnfs.length;
+      let db = (ib - lastIdx + allEnfs.length) % allEnfs.length;
+      if (da === 0) da = allEnfs.length;
+      if (db === 0) db = allEnfs.length;
+      return da - db;
+    });
+    enf = disp[0].u;
+    cf.lu = enf; 
+  }
+  
+  let base = {dt: sD, fc, cr, pl, ob: $('aob').value.toUpperCase().trim(), vd, en: enf, st: 'AGENDADO', crd: cu.u};
+  let nAgs = []; 
+  
+  if(cE) {
+    let idx = ag.findIndex(x => x.id === cE);
+    ag[idx] = {...ag[idx], ...base, hr: rT[0], nm, tl, ns, rs};
+    nAgs.push(ag[idx]);
+    cE = null;
+  } else {
+    let nAg = {id: Date.now(), ...base, hr: rT[0], nm, tl, ns, rs};
+    ag.push(nAg);
+    nAgs.push(nAg);
+  }
+  
+  ac.forEach((c, i) => {
+    let nAc = {id: Date.now() + i + 1, ...base, hr: rT[i+1], nm: c.n, tl, ns: c.d, rs: '', ob: `ACOMPANHANTE DE ${nm}. GRAU: ${c.p}. ` + base.ob};
+    ag.push(nAc);
+    nAgs.push(nAc);
+  });
+  
+  sv(); 
+  envPlanilha(nAgs); 
+  alert('AGENDADO COM SUCESSO!'); 
+  cxAg(); 
+};
+
+// LOGICA DE ATRASO CONFIGURAVEL
+setInterval(() => {
+  let d = new Date().getTime(), m = 0;
+  let tempoAtrasoMs = (cf.ta || 5) * 60000;
+  ag.forEach(x => {
+    if(x.st === 'AGENDADO' && d > new Date(`${x.dt}T${x.hr}:00`).getTime() + tempoAtrasoMs) { x.st = 'ATRASADA'; m = 1; }
+  });
+  if(m) { sv(); if(cu && cu.t === 'ENF') ld(); }
+}, 60000);
+
+window.ld = () => {
+  if(cu.t === 'VEND') {
+    let h = '<table><tr><th>DATA/HORA</th><th>NOME</th><th>STATUS</th><th>ACAO</th></tr>';
+    ag.filter(a => a.vd === cu.u || a.crd === cu.u).sort((a,b) => {
+      if(a.dt === b.dt) return (a.hr||'').localeCompare(b.hr||'');
+      return (a.dt||'').localeCompare(b.dt||'');
+    }).forEach(x => {
+      h += `<tr><td>${(x.dt||'').split('-').reverse().join('/')}<br>${x.hr}</td><td class="${x.st.includes('AGUARDANDO')?'red':''}">${x.nm}<br><small>${x.pl}</small><br><small>OBS: ${x.ob||'-'}</small></td><td>${x.st}</td><td>${x.st.includes('AGUARDANDO') ? `<button type="button" class="btn-d" onclick="opAg(${x.id})">REFAZER</button>` : '-'}</td></tr>`;
+    }); $('v-tb').innerHTML = h + '</table>';
+  }
+  if(cu.t === 'ENF') {
+    let h = '<table><tr><th>DATA/HORA</th><th>PACIENTE</th><th>PLANO/CAR.</th><th>STATUS</th><th>ACOES</th></tr>';
+    ag.filter(a => a.en === cu.u && !a.st.includes('AGUARDANDO')).sort((a,b) => {
+      if(a.dt === b.dt) return (a.hr||'').localeCompare(b.hr||'');
+      return (a.dt||'').localeCompare(b.dt||'');
+    }).forEach(x => {
+      let c = x.st === 'ATRASADA' ? 'red' : '';
+      let bI = (x.st === 'AGENDADO' || x.st === 'ATRASADA') ? `<button type="button" class="btn-s" onclick="uS(${x.id},'EM ANDAMENTO')">INICIAR</button>` : '';
+      let bC = x.st === 'EM ANDAMENTO' ? `<button type="button" class="btn-s" onclick="uS(${x.id},'CONCLUIDA')">CONCLUIDA</button>` : '';
+      let bR = `<button type="button" class="btn-d" onclick="oR(${x.id})">REAGENDAR</button>`;
+      h += `<tr class="${c}"><td>${(x.dt||'').split('-').reverse().join('/')}<br>${x.hr}</td><td><strong>${x.nm}</strong><br><small>TEL:${x.tl}</small><br><small>OBS: ${x.ob||'-'}</small></td><td>${x.pl}<br>${x.cr}</td><td>${x.st}</td><td>${bI}${bC}${bR}</td></tr>`;
+    }); $('e-tb').innerHTML = h + '</table>';
+  }
+  if(cu.t === 'ADMIN') {
+    ldAc(); 
+  }
+};
+
+window.uS = (i, s) => { if(s === 'CONCLUIDA' && !confirm('CONFIRMAR CONCLUSAO?')) return; ag.find(a => a.id === i).st = s; sv(); ld(); };
+window.oR = i => { 
+  cE = i; 
+  $('rmot').value = 'PROTOCOLO DE IDOSOS';
+  $('rmt').value = '';
+  $('rmt').classList.add('hide');
+  shM('m-rg'); 
+};
+window.cfRg = () => {
+  let tp = $('rmot').value;
+  let m = tp === 'OUTROS' ? $('rmt').value.toUpperCase().trim() : tp;
+  if(tp === 'OUTROS' && !m) return alert('MOTIVO OBRIGATORIO!');
+  
+  let a = ag.find(x => x.id === cE);
+  a.st = `AGUARDANDO REAGENDAMENTO: ${m}`;
+  if(a.pl === 'LANCERS') a.vd = a.crd; 
+  sv(); alert('REAGENDAMENTO SOLICITADO!'); clM('m-rg'); ld();
+};
+
+window.ldAc = () => {
+  let d = $('fdt').value, h = '<table><tr><th>DATA/HORA</th><th>NOME</th><th>VEND</th><th>ENF</th><th>STATUS</th><th>ACAO</th></tr>';
+  ag.filter(a => !d || a.dt === d).sort((a,b) => {
+    if(a.dt === b.dt) return (a.hr||'').localeCompare(b.hr||'');
+    return (a.dt||'').localeCompare(b.dt||'');
+  }).forEach(x => {
+    h += `<tr><td>${(x.dt||'').split('-').reverse().join('/')}<br>${x.hr}</td><td>${x.nm}<br><small>OBS: ${x.ob||'-'}</small></td><td>${x.vd}</td><td>${x.en}</td><td>${x.st}</td><td><button type="button" class="btn-w" onclick="oE(${x.id})">EDITAR</button></td></tr>`;
+  }); $('ac-tb').innerHTML = h + '</table>';
+};
+window.oE = id => {
+  cE = id; let a = ag.find(x => x.id === id);
+  $('enm').value = a.nm; $('etl').value = a.tl; $('ens').value = a.ns; $('efc').value = a.fc; $('ecr').value = a.cr; $('eob').value = a.ob;
+  if(a.pl === 'LANCERS') { $('epl').value = 'LANCERS'; $('eplo').classList.add('hide'); } 
+  else { $('epl').value = 'OUTROS'; $('eplo').value = a.pl; $('eplo').classList.remove('hide'); }
+  
+  let sV = $('evd'); sV.innerHTML = '<option value="FIC">FIC</option><option value="OUTRO">OUTRO</option>';
+  us.filter(x => x.t === 'VEND').forEach(v => sV.innerHTML += `<option value="${v.u}">${v.n}</option>`);
+  let opV = Array.from(sV.options).map(o => o.value);
+  if(opV.includes(a.vd)) { sV.value = a.vd; $('evdo').classList.add('hide'); } 
+  else { sV.value = 'OUTRO'; $('evdo').value = a.vd; $('evdo').classList.remove('hide'); }
+  
+  let sE = $('een'); sE.innerHTML = '';
+  us.filter(x => x.t === 'ENF').forEach(e => sE.innerHTML += `<option value="${e.u}">${e.n}</option>`);
+  sE.value = a.en; $('edt').value = a.dt; $('ehr').value = a.hr; shM('m-ed');
+};
+window.svEd = () => {
+  let a = ag.find(x => x.id === cE);
+  a.nm = $('enm').value.toUpperCase().trim(); a.tl = $('etl').value.trim(); a.ns = $('ens').value; a.fc = $('efc').value.toUpperCase().trim(); a.cr = $('ecr').value.toUpperCase().trim(); a.ob = $('eob').value.toUpperCase().trim();
+  a.pl = $('epl').value === 'OUTROS' ? $('eplo').value.toUpperCase().trim() : 'LANCERS';
+  a.vd = $('evd').value === 'OUTRO' ? $('evdo').value.toUpperCase().trim() : $('evd').value;
+  a.en = $('een').value; a.dt = $('edt').value; a.hr = $('ehr').value;
+  sv(); alert('AGENDAMENTO ATUALIZADO!'); clM('m-ed'); ldAc();
+};
+
+window.ldGe = () => {
+  let h = '<table><tr><th>NOME</th><th>STATUS</th><th>ALMOCO</th><th>ACOES</th></tr>';
+  us.filter(u => u.t === 'ENF').forEach(e => {
+    let b = e.a ? `<button type="button" class="btn-d" onclick="tE('${e.u}')">DESATIVAR</button>` : `<button type="button" class="btn-s" onclick="tE('${e.u}')">ATIVAR</button>`;
+    h += `<tr><td>${e.n}</td><td class="${e.a?'':'red'}">${e.a?'ATIVA':'INATIVA'}</td><td><input type="time" style="width:80px;display:inline" value="${e.aI}" onchange="sA('${e.u}','i',this.value)"> <input type="time" style="width:80px;display:inline" value="${e.aF}" onchange="sA('${e.u}','f',this.value)"></td><td><button type="button" class="btn-w" onclick="oP('${e.u}')">PAUSAS</button>${b}</td></tr>`;
+  }); $('ge-tb').innerHTML = h + '</table>';
+};
+window.sA = (u,t,v) => { let e = us.find(x => x.u === u); if(t === 'i') e.aI = v; else e.aF = v; sv(); };
+window.tE = u => {
+  let e = us.find(x => x.u === u); if(e.a && !confirm('DESATIVAR E REDISTRIBUIR HOJE?')) return; e.a = !e.a;
+  if(!e.a) {
+    let hj = new Date().toISOString().split('T')[0], at = us.filter(x => x.t === 'ENF' && x.a);
+    ag.filter(a => a.dt === hj && a.en === u && a.st === 'AGENDADO').forEach(a => {
+      if(at.length > 0) a.en = at[0].u; else { a.st = 'PENDENTE'; a.en = ''; }
+    });
+  } sv(); ldGe();
+};
+window.oP = u => { ep = u; $('tps').innerText = `PAUSAS: ${us.find(x => x.u === u).n}`; $('pi').value = ''; $('pf').value = ''; rP(); shM('m-ps'); };
+window.rP = () => {
+  let e = us.find(x => x.u === ep), l = $('lps'); l.innerHTML = '';
+  if(!e.ps || !e.ps.length) return l.innerHTML = 'NENHUMA PAUSA';
+  e.ps.forEach((p,i) => { l.innerHTML += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">${p.i} AS ${p.f} <button type="button" class="btn-d" style="width:auto;margin:0;padding:5px" onclick="rmP(${i})">X</button></div>`; });
+};
+window.adP = () => { let i = $('pi').value, f = $('pf').value; if(!i || !f) return; us.find(x => x.u === ep).ps.push({i, f}); sv(); rP(); };
+window.rmP = i => { us.find(x => x.u === ep).ps.splice(i, 1); sv(); rP(); };
+
+window.ldCf = () => {
+  $('cdu').value = cf.du;
+  $('cta').value = cf.ta || 5;
+  let h = '<table><tr><th>LOGIN</th><th>TIPO</th><th>STATUS</th><th>ACAO</th></tr>';
+  us.forEach(x => {
+    let b = x.a ? `<button type="button" class="btn-d" onclick="tU('${x.u}')">DESATIVAR</button>` : `<button type="button" class="btn-s" onclick="tU('${x.u}')">ATIVAR</button>`;
+    h += `<tr><td>${x.u}</td><td>${x.t}</td><td class="${x.a?'':'red'}">${x.a?'ATIVO':'INATIVO'}</td><td><button type="button" class="btn-w" onclick="oEu('${x.u}')">EDITAR</button>${b}</td></tr>`;
+  }); $('us-tb').innerHTML = h + '</table>';
+};
+window.svC = () => { 
+  cf.du = parseInt($('cdu').value) || 5; 
+  cf.ta = parseInt($('cta').value) || 5;
+  sv(); alert('CONFIGURACOES SALVAS!'); 
+};
+window.tU = u => { us.find(x => x.u === u).a = !us.find(x => x.u === u).a; sv(); ldCf(); };
+window.crU = () => {
+  let l = $('nu').value.toUpperCase().trim(), n = $('nn').value.toUpperCase().trim(), p = $('np').value.trim(), t = $('nt').value;
+  if(!l || !n || !p) return alert('PREENCHA TODOS OS CAMPOS!');
+  if(us.some(x => x.u === l)) return alert('USUARIO JA EXISTE!');
+  us.push({u: l, n, p, t, a: 1, aI: '', aF: '', ps: []}); sv();
+  $('nu').value = ''; $('nn').value = ''; $('np').value = ''; alert('USUARIO CRIADO!'); ldCf();
+};
+window.oEu = u => {
+  cU = u; let x = us.find(y => y.u === u);
+  $('eul').value = x.u; $('eun').value = x.n; $('eup').value = x.p; $('eut').value = x.t; shM('m-eu');
+};
+window.svEu = () => {
+  let n = $('eun').value.toUpperCase().trim(), p = $('eup').value.trim(), t = $('eut').value;
+  if(!n || !p) return alert('PREENCHA NOME E SENHA!');
+  let x = us.find(y => y.u === cU); x.n = n; x.p = p; x.t = t;
+  sv(); clM('m-eu'); ldCf(); alert('USUARIO ATUALIZADO!');
+};
+
+window.zr = () => { if(prompt("SENHA PARA ZERAR:") !== "bensaude4477") return alert("SENHA INCORRETA!"); shM('m-zr'); };
+window.cfZr = () => {
+  let o = $('zo').value;
+  if(o === 'T') { if(confirm('APAGAR TODOS OS ATENDIMENTOS?')) { ag = []; sv(); alert('APAGADOS!'); } } 
+  else { let d = $('zd').value; if(!d) return alert('SELECIONE A DATA!'); if(confirm('APAGAR DO DIA?')) { ag = ag.filter(a => a.dt !== d); sv(); alert('APAGADOS!'); } }
+  clM('m-zr'); ldAc();
+};
+window.exp = () => {
+  let c = "\uFEFFDATA;HORA;NOME;TEL;PLANO;VEND;ENF;STATUS\n";
+  ag.forEach(x => c += `${x.dt};${x.hr};${x.nm};${x.tl};${x.pl};${x.vd};${x.en};${x.st}\n`);
+  let l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([c], {type:'text/csv;charset=utf-8;'}));
+  l.download = "RELATORIO.csv"; document.body.appendChild(l); l.click(); document.body.removeChild(l);
+};
+
+sh('t-log');
+</script>
+</body>
+</html>
